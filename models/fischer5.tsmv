@@ -1,0 +1,39 @@
+MODULE fischer(pid, id, turn, K)
+    VAR
+        state : {a, req, wait, cs};
+        x : clock((state = a & next(state = req))
+                | (state = wait & next(state = req))
+                | (state = req & next(state = wait)));
+    INIT state = a;
+    TRANS (next(turn) != pid) -> (next(state) = state)
+	TRANS (next(turn) = pid & state = a)    ->  next(state = req)
+	TRANS (next(turn) = pid & state = req)  ->  next(state = wait)
+	TRANS (next(turn) = pid & state = wait) -> (next(state = req) | next(state = cs));
+	TRANS (next(turn) = pid & state = cs)   ->  next(state = a)
+	
+    TRANS (next(turn) = pid) -> next(id) = case
+                state = req & next(state = wait) : pid;
+                state = cs & next(state = a)     : 0;
+                TRUE                             : id;
+            esac;
+    
+    INVAR state = req -> x <= K
+    
+    TRANS (state = a & next(state = req)) -> id = 0
+    TRANS (state = req & next(state = wait)) -> x <= K
+    TRANS (state = wait & next(state = req)) -> id = 0
+    TRANS (state = wait & next(state = cs)) -> x > K & id = pid
+    
+
+
+MODULE main
+    VAR
+        turn : 1..5;
+        id : 0..5;
+        p1 : fischer(1, id, turn, 2);
+        p2 : fischer(2, id, turn, 2);
+        p3 : fischer(3, id, turn, 2);
+        p4 : fischer(4, id, turn, 2);
+        p5 : fischer(5, id, turn, 2);
+    INIT id = 0
+    INVARSPEC ! (p1.state = cs & p2.state = cs)

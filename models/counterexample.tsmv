@@ -1,0 +1,15 @@
+MODULE main
+	VAR
+		a : boolean;
+		b : boolean;
+		c : clock(next(a));
+		d : clock(next(b));
+	
+	INIT !a
+	INIT !b
+	
+	TRANS (next(a) & !a) -> (d > 1 & d < 2 & c > 3)
+	TRANS (next(a) & !a) -> next(!b)
+	
+	INVARSPEC !a | !b
+
